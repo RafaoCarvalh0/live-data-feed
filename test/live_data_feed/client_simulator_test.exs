@@ -11,8 +11,6 @@ defmodule LiveDataFeed.ClientSimulatorTest do
     original_level = Logger.level()
     Logger.configure(level: :info)
 
-    {:ok, _} = start_supervised({Registry, keys: :unique, name: LiveDataFeed.ClientRegistry})
-
     on_exit(fn ->
       Logger.configure(level: original_level)
     end)
@@ -26,15 +24,18 @@ defmodule LiveDataFeed.ClientSimulatorTest do
       end)
     end
 
-    test "returns error for invalid symbol" do
-      assert {:error, :invalid_symbol} = ClientSimulator.start_link("INVALID")
-    end
-
-    test "returns error if a client is already using a symbol" do
+    test "allow many clients to a same symbol" do
       {:ok, pid} = ClientSimulator.start_link("TSLA")
       assert Process.alive?(pid)
 
-      assert {:error, {:already_started, ^pid}} = ClientSimulator.start_link("TSLA")
+      {:ok, another_pid} = ClientSimulator.start_link("TSLA")
+      assert Process.alive?(another_pid)
+
+      assert pid != another_pid
+    end
+
+    test "returns error for invalid symbol" do
+      assert {:error, :invalid_symbol} = ClientSimulator.start_link("INVALID")
     end
   end
 

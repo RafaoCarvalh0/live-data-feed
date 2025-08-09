@@ -4,7 +4,7 @@ defmodule LiveDataFeed.PriceStreamer do
   require Logger
 
   @symbols ["AAPL", "GOOG", "TSLA", "AMZN"]
-  @interval_in_ms 1_000
+  @interval_in_ms 2_000
 
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, %{}, opts)
