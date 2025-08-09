@@ -11,7 +11,6 @@ defmodule LiveDataFeed.Application do
         LiveDataFeedWeb.Telemetry,
         {DNSCluster, query: Application.get_env(:live_data_feed, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: LiveDataFeed.PubSub},
-        {LiveDataFeed.PriceStreamer, []},
         # Start a worker by calling: LiveDataFeed.Worker.start_link(arg)
         # {LiveDataFeed.Worker, arg},
         # Start to serve requests, typically the last entry

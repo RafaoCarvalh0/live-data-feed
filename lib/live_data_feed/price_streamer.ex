@@ -1,6 +1,8 @@
 defmodule LiveDataFeed.PriceStreamer do
   use GenServer
 
+  require Logger
+
   @symbols ["AAPL", "GOOG", "TSLA", "AMZN"]
   @interval_in_ms 1_000
 
