@@ -56,7 +56,7 @@ defmodule LiveDataFeed.ClientSimulatorTest do
       log =
         capture_log(fn ->
           send(pid, %{symbol: "TSLA", price: 15000})
-          Process.sleep(10)
+          wait_for_process_to_finish()
         end)
 
       assert log =~ ~S(ClientSimulator "TSLA")
@@ -69,9 +69,11 @@ defmodule LiveDataFeed.ClientSimulatorTest do
       message = %{foo: "bar"}
 
       send(pid, message)
-      Process.sleep(10)
+      wait_for_process_to_finish()
 
       refute_received ^message
     end
   end
+
+  defp wait_for_process_to_finish(), do: Process.sleep(100)
 end
