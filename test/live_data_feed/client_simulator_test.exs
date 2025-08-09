@@ -71,7 +71,7 @@ defmodule LiveDataFeed.ClientSimulatorTest do
       send(pid, message)
       Process.sleep(10)
 
-      refute_received message
+      refute_received ^message
     end
   end
 end

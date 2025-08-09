@@ -4,16 +4,16 @@ defmodule LiveDataFeed.PriceStreamer do
   @symbols ["AAPL", "GOOG", "TSLA", "AMZN"]
   @interval_in_ms 1_000
 
-  def start_link(_) do
-    GenServer.start_link(__MODULE__, %{}, name: :price_streamer)
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, %{}, opts)
   end
 
   def init(state) do
-    schedule_tick()
+    schedule_update()
     {:ok, state}
   end
 
-  def handle_info(:tick, state) do
+  def handle_info(:update, state) do
     Enum.each(@symbols, fn symbol ->
       price_in_cents = :rand.uniform(100_000)
 
@@ -23,11 +23,11 @@ defmodule LiveDataFeed.PriceStreamer do
       })
     end)
 
-    schedule_tick()
+    schedule_update()
     {:noreply, state}
   end
 
-  defp schedule_tick do
-    Process.send_after(self(), :tick, @interval_in_ms)
+  defp schedule_update do
+    Process.send_after(self(), :update, @interval_in_ms)
   end
 end

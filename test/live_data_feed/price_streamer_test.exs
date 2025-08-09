@@ -7,15 +7,16 @@ defmodule LiveDataFeed.PriceStreamerTest do
 
   describe "start_link/1" do
     test "starts the process" do
-      assert {:ok, pid} = PriceStreamer.start_link(nil)
+      assert {:ok, pid} = PriceStreamer.start_link()
       assert Process.alive?(pid)
+
+      GenServer.stop(pid)
     end
   end
 
   describe "handle_info/2" do
     setup do
-      {:ok, pid} = PriceStreamer.start_link(nil)
-
+      {:ok, pid} = start_supervised(PriceStreamer)
       %{pid: pid}
     end
 
@@ -47,6 +48,6 @@ defmodule LiveDataFeed.PriceStreamerTest do
   end
 
   defp force_stock_update(pid) do
-    Process.send(pid, :tick, [])
+    send(pid, :update)
   end
 end
