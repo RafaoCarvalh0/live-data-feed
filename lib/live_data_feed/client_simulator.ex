@@ -18,14 +18,14 @@ defmodule LiveDataFeed.ClientSimulator do
 
     Phoenix.PubSub.subscribe(LiveDataFeed.PubSub, topic)
 
-    Logger.info("[ClientSimulator #{inspect(symbol)}] Subscribed to #{inspect(topic)}")
+    Logger.info("[PID #{inspect(self())}] Subscribed to #{inspect(topic)}")
 
     {:ok, symbol}
   end
 
   def handle_info(%{symbol: symbol, price: price_in_cents} = _msg, state) do
     Logger.info(
-      "[ClientSimulator #{inspect(symbol)}] Received update: #{inspect(price_in_cents)} cents"
+      "[PID #{inspect(self())}] Received update: #{inspect(symbol)} - #{inspect(price_in_cents)} cents"
     )
 
     {:noreply, state}

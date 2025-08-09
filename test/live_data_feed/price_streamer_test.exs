@@ -47,7 +47,5 @@ defmodule LiveDataFeed.PriceStreamerTest do
     end
   end
 
-  defp force_stock_update(pid) do
-    send(pid, :update)
-  end
+  defp force_stock_update(pid), do: send(pid, :update)
 end

@@ -17,7 +17,8 @@ defmodule LiveDataFeed.PriceStreamer do
 
   def handle_info(:update, state) do
     Enum.each(@symbols, fn symbol ->
-      price_in_cents = :rand.uniform(100_000)
+      price_in_cents =
+        :rand.uniform(100_000)
 
       Phoenix.PubSub.broadcast(LiveDataFeed.PubSub, "stocks:#{symbol}", %{
         symbol: symbol,

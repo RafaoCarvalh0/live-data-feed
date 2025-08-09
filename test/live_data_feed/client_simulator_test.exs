@@ -60,8 +60,7 @@ defmodule LiveDataFeed.ClientSimulatorTest do
           wait_for_process_to_finish()
         end)
 
-      assert log =~ ~S(ClientSimulator "TSLA")
-      assert log =~ ~S(Received update: 15000 cents)
+      assert log =~ ~s([PID #{inspect(pid)}] Received update: "TSLA" - 15000 cents)
     end
 
     test "ignores other messages" do
