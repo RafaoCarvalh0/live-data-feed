@@ -19,7 +19,7 @@ defmodule LiveDataFeed.MixProject do
   def application do
     [
       mod: {LiveDataFeed.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :mnesia]
     ]
   end
 

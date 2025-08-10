@@ -4,8 +4,12 @@ defmodule LiveDataFeed.Application do
   @moduledoc false
   use Application
 
+  alias LiveDataFeed.MnesiaDbSetup
+
   @impl true
   def start(_type, _args) do
+    MnesiaDbSetup.start_mnesia()
+
     children =
       [
         LiveDataFeedWeb.Telemetry,

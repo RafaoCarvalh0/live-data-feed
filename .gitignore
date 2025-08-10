@@ -35,3 +35,7 @@ live_data_feed-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# Ignore Mnesia files (Erlang DB)
+Mnesia.*
+_mnesia/
+
