@@ -2,38 +2,66 @@ defmodule LiveDataFeed.Stock.StockRepositoryTest do
   use ExUnit.Case, async: true
 
   alias LiveDataFeed.Stock.StockRespository
+  alias LiveDataFeed.Fixtures.StockFixtures
 
   setup do
-    :mnesia.clear_table(:stock_prices)
-    :ok
+    StockFixtures.clear_stock_prices_table()
   end
 
-  describe "upsert_stock/2" do
+  describe "upsert_stocks/2" do
     test "returns ok when insert is successful" do
-      assert :ok = StockRespository.upsert_stock("AAPL", 15000)
+      input = [
+        %{
+          symbol: "AAPL",
+          price: 15000
+        }
+      ]
 
-      {:ok, inserted_data} = get_data_from_mnesia_table(:stock_prices, "AAPL")
+      assert :ok = StockRespository.upsert_stocks(input)
+
+      {:ok, inserted_data} = StockFixtures.get_stock_by_symbol("AAPL")
 
       assert inserted_data == [{:stock_prices, "AAPL", 15000}]
     end
 
     test "returns updated data when the primary key already exists" do
-      :ok = StockRespository.upsert_stock("AAPL", 0)
+      :ok =
+        StockRespository.upsert_stocks([
+          %{
+            symbol: "AAPL",
+            price: 0
+          }
+        ])
 
-      assert :ok = StockRespository.upsert_stock("AAPL", 15500)
+      assert :ok =
+               StockRespository.upsert_stocks([
+                 %{
+                   symbol: "AAPL",
+                   price: 15500
+                 }
+               ])
 
-      {:ok, updated_data} = get_data_from_mnesia_table(:stock_prices, "AAPL")
+      {:ok, updated_data} = StockFixtures.get_stock_by_symbol("AAPL")
 
       assert updated_data == [{:stock_prices, "AAPL", 15500}]
     end
 
     test "does not duplicate record when a existent primary key is sent" do
-      :ok = StockRespository.upsert_stock("AAPL", 15)
-      :ok = StockRespository.upsert_stock("AAPL", 15500)
+      assert :ok =
+               StockRespository.upsert_stocks([
+                 %{
+                   symbol: "AAPL",
+                   price: 15
+                 },
+                 %{
+                   symbol: "AAPL",
+                   price: 15500
+                 }
+               ])
 
       records =
-        :stock_prices
-        |> get_data_from_mnesia_table("AAPL")
+        "AAPL"
+        |> StockFixtures.get_stock_by_symbol()
         |> case do
           {:ok, records} -> List.flatten(records)
           _ -> []
@@ -42,19 +70,21 @@ defmodule LiveDataFeed.Stock.StockRepositoryTest do
       assert length(records) == 1
       assert records == [{:stock_prices, "AAPL", 15500}]
     end
+
+    test "returns error with reason when an invalid input is provided" do
+      assert {:error, _reason} = StockRespository.upsert_stocks(nil)
+    end
   end
 
   describe "get_stocks_by_symbols/1" do
     test "returns a list of found stock price records when they exist" do
-      :ok = insert_data_into_mnesia_table({:stock_prices, "AAPL", 15000})
-      :ok = insert_data_into_mnesia_table({:stock_prices, "GOOG", 280_000})
+      :ok = StockFixtures.create_stock("AAPL", 15000)
+      :ok = StockFixtures.create_stock("GOOG", 280_000)
 
       {:ok, result} = StockRespository.get_stocks_by_symbols(["AAPL", "GOOG"])
 
-      records = List.flatten(result)
-
-      assert {:stock_prices, "AAPL", 15000} in records
-      assert {:stock_prices, "GOOG", 280_000} in records
+      assert Enum.sort(result) ==
+               Enum.sort([%{symbol: "AAPL", price: 15000}, %{symbol: "GOOG", price: 280_000}])
     end
 
     test "return an empty list when any of the stocks exist" do
@@ -64,33 +94,9 @@ defmodule LiveDataFeed.Stock.StockRepositoryTest do
 
       assert records == []
     end
-  end
 
-  defp get_data_from_mnesia_table(table, primary_key) do
-    data_to_read = fn ->
-      :mnesia.read({table, primary_key})
+    test "returns error with reason when an invalid input is provided" do
+      assert {:error, _reason} = StockRespository.get_stocks_by_symbols(nil)
     end
-
-    data_to_read
-    |> :mnesia.transaction()
-    |> case do
-      {:atomic, data} -> {:ok, data}
-      {:aborted, reason} -> {:error, reason}
-    end
-  end
-
-  defp insert_data_into_mnesia_table(data) do
-    transaction = fn ->
-      :mnesia.write(data)
-    end
-
-    transaction
-    |> :mnesia.transaction()
-    |> case do
-      {:atomic, upserted_stock} -> {:ok, upserted_stock}
-      {:aborted, reason} -> {:error, reason}
-    end
-
-    Process.sleep(10)
   end
 end

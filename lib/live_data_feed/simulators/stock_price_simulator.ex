@@ -10,6 +10,8 @@ defmodule LiveDataFeed.Simulators.StockPriceSimulator do
 
   @variation_percent 0.05
 
+  def available_symbols, do: @symbols
+
   @doc """
   Returns a list of stock price maps.
 

@@ -7,4 +7,6 @@ defmodule LiveDataFeed.Behaviours.StockPriceFetcher do
                 volume: float()
               }
             ]
+
+  @callback available_symbols() :: [String.t()]
 end
