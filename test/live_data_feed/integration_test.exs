@@ -3,7 +3,8 @@ defmodule LiveDataFeed.IntegrationTest do
 
   import ExUnit.CaptureLog
 
-  alias LiveDataFeed.{PriceStreamer, ClientSimulator}
+  alias LiveDataFeed.PriceStreamer
+  alias LiveDataFeed.Simulators.ClientSimulator
 
   @price_streamer_process :price_streamer_test
 
