@@ -31,9 +31,11 @@ defmodule LiveDataFeed.Simulators.StockPriceSimulator do
       base_price_cents = Map.get(@initial_prices_in_cents, symbol)
       current_price = apply_random_variation(base_price_cents) / 100.0
 
+      current_price_cents = round(current_price * 100)
+
       %{
         symbol: symbol,
-        current_price: current_price,
+        current_price: current_price_cents,
         timestamp: System.system_time(:millisecond),
         volume: simulate_volume()
       }

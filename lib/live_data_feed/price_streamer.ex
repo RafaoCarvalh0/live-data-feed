@@ -5,7 +5,7 @@ defmodule LiveDataFeed.PriceStreamer do
 
   require Logger
 
-  @interval_in_ms 2_000
+  @interval_in_ms 3_000
 
   def start_link(opts \\ []) do
     stock_price_fetcher = Keyword.get(opts, :stock_price_fetcher, LiveDataFeed.LocalPriceFetcher)
@@ -33,26 +33,28 @@ defmodule LiveDataFeed.PriceStreamer do
           %{}
       end
 
-    Enum.each(prices, fn %{symbol: symbol, current_price: price, timestamp: ts, volume: vol} ->
-      price_in_cents = price * 100
+    prices
+    |> Enum.map(&%{symbol: &1.symbol, value: &1.current_price})
+    |> StockService.set_stocks_data()
 
+    Enum.each(prices, fn %{symbol: symbol, current_price: price, timestamp: ts, volume: vol} ->
       last_price =
         last_stock_data_lookup
         |> Map.get(symbol, %{})
         |> Map.get(:price, 0)
 
-      price_change = price_in_cents - last_price
+      price_change = price - last_price
 
       price_change_percent =
         if last_price != 0 do
-          (price_in_cents - last_price) / last_price * 100
+          (price - last_price) / last_price * 100
         else
           0
         end
 
       Phoenix.PubSub.broadcast(LiveDataFeed.PubSub, "stocks:#{symbol}", %{
         symbol: symbol,
-        current_price: price_in_cents,
+        current_price: price,
         last_price: last_price,
         price_change: price_change,
         price_change_percent: price_change_percent,
@@ -67,5 +69,26 @@ defmodule LiveDataFeed.PriceStreamer do
 
   defp schedule_update do
     Process.send_after(self(), :update, @interval_in_ms)
+  end
+
+  def terminate(_reason, %{stock_price_fetcher: fetcher}) do
+    Logger.warning("Gracefully shutting down: saving snapshot of most recent stock updates.")
+
+    try_to_persist_last_stock_updates(fetcher)
+  end
+
+  defp try_to_persist_last_stock_updates(stock_price_fetcher) do
+    stock_price_fetcher.fetch_prices()
+    |> Enum.map(fn %{symbol: symbol, current_price: price} ->
+      %{
+        symbol: symbol,
+        price: price * 100
+      }
+    end)
+    |> StockService.set_stocks_data()
+    |> case do
+      :ok -> Logger.info("Snapshot saved successfully.")
+      _ -> Logger.warning("Snapshot could not be saved.")
+    end
   end
 end
