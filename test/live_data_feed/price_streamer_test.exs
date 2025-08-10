@@ -17,6 +17,7 @@ defmodule LiveDataFeed.PriceStreamerTest do
   describe "handle_info/2" do
     setup do
       {:ok, pid} = start_supervised(PriceStreamer)
+
       %{pid: pid}
     end
 
@@ -25,10 +26,45 @@ defmodule LiveDataFeed.PriceStreamerTest do
 
       force_stock_update(pid)
 
-      assert_receive %{symbol: "AAPL", price: _}
-      assert_receive %{symbol: "GOOG", price: _}
-      assert_receive %{symbol: "TSLA", price: _}
-      assert_receive %{symbol: "AMZN", price: _}
+      assert_receive %{
+        symbol: "AAPL",
+        current_price: _,
+        last_price: _,
+        price_change: _,
+        price_change_percent: _,
+        timestamp: _,
+        volume: _
+      }
+
+      assert_receive %{
+        symbol: "GOOG",
+        current_price: _,
+        last_price: _,
+        price_change: _,
+        price_change_percent: _,
+        timestamp: _,
+        volume: _
+      }
+
+      assert_receive %{
+        symbol: "TSLA",
+        current_price: _,
+        last_price: _,
+        price_change: _,
+        price_change_percent: _,
+        timestamp: _,
+        volume: _
+      }
+
+      assert_receive %{
+        symbol: "AMZN",
+        current_price: _,
+        last_price: _,
+        price_change: _,
+        price_change_percent: _,
+        timestamp: _,
+        volume: _
+      }
 
       refute_receive _
     end
@@ -39,11 +75,45 @@ defmodule LiveDataFeed.PriceStreamerTest do
 
       force_stock_update(pid)
 
-      assert_receive %{symbol: "GOOG", price: _}
-      assert_receive %{symbol: "AMZN", price: _}
+      assert_receive %{
+        symbol: "GOOG",
+        current_price: _,
+        last_price: _,
+        price_change: _,
+        price_change_percent: _,
+        timestamp: _,
+        volume: _
+      }
 
-      refute_receive %{symbol: "TSLA", price: _}
-      refute_receive %{symbol: "AAPL", price: _}
+      assert_receive %{
+        symbol: "AMZN",
+        current_price: _,
+        last_price: _,
+        price_change: _,
+        price_change_percent: _,
+        timestamp: _,
+        volume: _
+      }
+
+      refute_receive %{
+        symbol: "TSLA",
+        current_price: _,
+        last_price: _,
+        price_change: _,
+        price_change_percent: _,
+        timestamp: _,
+        volume: _
+      }
+
+      refute_receive %{
+        symbol: "AAPL",
+        current_price: _,
+        last_price: _,
+        price_change: _,
+        price_change_percent: _,
+        timestamp: _,
+        volume: _
+      }
     end
   end
 

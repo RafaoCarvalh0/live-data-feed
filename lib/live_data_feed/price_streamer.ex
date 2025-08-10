@@ -19,10 +19,16 @@ defmodule LiveDataFeed.PriceStreamer do
   def handle_info(:update, %{stock_price_fetcher: stock_price_fetcher} = state) do
     prices = stock_price_fetcher.fetch_prices()
 
-    Enum.each(prices, fn {symbol, price} ->
+    # TODO: add mnesia to store last value
+    Enum.each(prices, fn %{symbol: symbol, current_price: price, timestamp: ts, volume: vol} ->
       Phoenix.PubSub.broadcast(LiveDataFeed.PubSub, "stocks:#{symbol}", %{
         symbol: symbol,
-        price: price
+        current_price: price,
+        last_price: 0,
+        price_change: 0,
+        price_change_percent: 0,
+        timestamp: ts,
+        volume: vol
       })
     end)
 

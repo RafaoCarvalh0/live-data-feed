@@ -10,26 +10,42 @@ defmodule LiveDataFeed.Simulators.StockPriceSimulator do
 
   @variation_percent 0.05
 
-  @type available_symbols :: String.t()
-
-  def available_symbols(), do: @symbols
-
   @doc """
-  Returns a map of all available symbols to their current prices with random variation applied.
-  Each symbol's price is based on the initial price plus a small random variation.
+  Returns a list of stock price maps.
+
+  The prices and volumes returned are simulated with random variations around initial values,
+  intended to mimic real-time fluctuating stock data.
   """
-  @spec get_prices_with_variation() :: %{String.t() => integer()}
-  def get_prices_with_variation do
-    Enum.reduce(@symbols, %{}, fn symbol, acc ->
-      base_price = Map.get(@initial_prices_in_cents, symbol)
-      new_price = apply_random_variation(base_price)
-      Map.put(acc, symbol, new_price)
+  @spec get_prices_with_variation() :: [
+          %{
+            symbol: String.t(),
+            current_price: integer(),
+            timestamp: integer(),
+            volume: float()
+          }
+        ]
+  def get_prices_with_variation() do
+    Enum.map(@symbols, fn symbol ->
+      base_price_cents = Map.get(@initial_prices_in_cents, symbol)
+      current_price = apply_random_variation(base_price_cents) / 100.0
+
+      %{
+        symbol: symbol,
+        current_price: current_price,
+        timestamp: System.system_time(:millisecond),
+        volume: simulate_volume()
+      }
     end)
   end
 
-  defp apply_random_variation(price) do
-    max_variation = round(price * @variation_percent)
+  defp apply_random_variation(price_cents) do
+    max_variation = round(price_cents * @variation_percent)
     variation = :rand.uniform(max_variation * 2 + 1) - max_variation - 1
-    max(price + variation, 1)
+    max(price_cents + variation, 1)
+  end
+
+  defp simulate_volume do
+    (:rand.uniform() * 10_000)
+    |> Float.round(4)
   end
 end
