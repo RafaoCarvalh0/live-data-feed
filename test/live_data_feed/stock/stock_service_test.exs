@@ -60,7 +60,7 @@ defmodule LiveDataFeed.Stock.StockServiceTest do
     end
   end
 
-  describe "register_stocks/1" do
+  describe "set_stocks_data/1" do
     test "returns :ok if stocks data were registered successfully" do
       stocks_to_register = [
         %{
@@ -73,13 +73,13 @@ defmodule LiveDataFeed.Stock.StockServiceTest do
         }
       ]
 
-      assert :ok = StockService.register_stocks(stocks_to_register)
+      assert :ok = StockService.set_stocks_data(stocks_to_register)
     end
 
     test "returns :ok if stocks list is empty" do
       stocks_to_register = []
 
-      assert :ok = StockService.register_stocks(stocks_to_register)
+      assert :ok = StockService.set_stocks_data(stocks_to_register)
     end
 
     test "returns error with reason if any of the stocks are invalid" do
@@ -92,7 +92,7 @@ defmodule LiveDataFeed.Stock.StockServiceTest do
 
       logs =
         capture_log(fn ->
-          assert {:error, reason} = StockService.register_stocks(stocks_to_register)
+          assert {:error, reason} = StockService.set_stocks_data(stocks_to_register)
           assert reason == :invalid_stock_input
         end)
 

@@ -21,8 +21,11 @@ defmodule LiveDataFeed.Stock.StockService do
     end
   end
 
-  @spec register_stocks(Types.register_stocks_input()) :: :ok | {:error, atom()}
-  def register_stocks(stock_list) do
+  @doc """
+  Insert new stocks if they don't exist, and updates existing ones.
+  """
+  @spec set_stocks_data(Types.register_stocks_input()) :: :ok | {:error, atom()}
+  def set_stocks_data(stock_list) do
     case validate_stocks_input(stock_list) do
       :valid ->
         stock_list
