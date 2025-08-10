@@ -1,9 +1,9 @@
-defmodule LiveDataFeed.ClientSimulatorTest do
+defmodule LiveDataFeed.Simulators.ClientSimulatorTest do
   use ExUnit.Case, async: true
 
   import ExUnit.CaptureLog
 
-  alias LiveDataFeed.ClientSimulator
+  alias LiveDataFeed.Simulators.ClientSimulator
 
   @available_symbols ["AAPL", "GOOG", "TSLA", "AMZN"]
 

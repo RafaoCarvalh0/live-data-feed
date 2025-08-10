@@ -3,11 +3,12 @@ defmodule LiveDataFeed.PriceStreamer do
 
   require Logger
 
-  @symbols ["AAPL", "GOOG", "TSLA", "AMZN"]
   @interval_in_ms 2_000
 
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, %{}, opts)
+    stock_price_fetcher = Keyword.get(opts, :stock_price_fetcher, LiveDataFeed.LocalPriceFetcher)
+
+    GenServer.start_link(__MODULE__, %{stock_price_fetcher: stock_price_fetcher}, opts)
   end
 
   def init(state) do
@@ -15,14 +16,13 @@ defmodule LiveDataFeed.PriceStreamer do
     {:ok, state}
   end
 
-  def handle_info(:update, state) do
-    Enum.each(@symbols, fn symbol ->
-      price_in_cents =
-        :rand.uniform(100_000)
+  def handle_info(:update, %{stock_price_fetcher: stock_price_fetcher} = state) do
+    prices = stock_price_fetcher.fetch_prices()
 
+    Enum.each(prices, fn {symbol, price} ->
       Phoenix.PubSub.broadcast(LiveDataFeed.PubSub, "stocks:#{symbol}", %{
         symbol: symbol,
-        price: price_in_cents
+        price: price
       })
     end)
 

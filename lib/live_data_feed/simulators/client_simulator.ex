@@ -1,4 +1,4 @@
-defmodule LiveDataFeed.ClientSimulator do
+defmodule LiveDataFeed.Simulators.ClientSimulator do
   use GenServer
 
   require Logger
