@@ -10,7 +10,7 @@ defmodule LiveDataFeed.MnesiaDbSetup do
     :mnesia.start()
 
     case :mnesia.create_table(:stock_prices, [
-           {:attributes, [:symbol, :price_cents, :timestamp]},
+           {:attributes, [:symbol, :price_in_cents]},
            {:disc_copies, [node()]},
            {:type, :set}
          ]) do
