@@ -1,5 +1,5 @@
 defmodule LiveDataFeed.Simulators.StockPriceSimulatorTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias LiveDataFeed.Simulators.StockPriceSimulator
 
@@ -25,15 +25,17 @@ defmodule LiveDataFeed.Simulators.StockPriceSimulatorTest do
     test "prices vary within 5% of initial price" do
       prices = StockPriceSimulator.get_prices_with_variation()
 
-      Enum.each(prices, fn %{symbol: symbol, current_price: price} ->
+      Enum.each(prices, fn %{symbol: symbol, current_price: price_cents} ->
         initial_cents = Map.fetch!(@initial_prices_in_cents, symbol)
         initial_price = initial_cents / 100.0
 
+        current_price = price_cents / 100.0
+
         max_variation = initial_price * @tolerance
-        diff = abs(price - initial_price)
+        diff = abs(current_price - initial_price)
 
         assert diff <= max_variation,
-               "Price variation for #{symbol} (#{price}) exceeds tolerance from initial (#{initial_price})"
+               "Price variation for #{symbol} (#{current_price}) exceeds tolerance from initial (#{initial_price})"
       end)
     end
 

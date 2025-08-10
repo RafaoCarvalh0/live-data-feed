@@ -1,5 +1,5 @@
 defmodule LiveDataFeed.IntegrationTest do
-  use ExUnit.Case, async: false
+  use LiveDataFeed.DataCase
 
   import ExUnit.CaptureLog
 
@@ -34,17 +34,17 @@ defmodule LiveDataFeed.IntegrationTest do
         force_stock_update(ps_pid)
       end)
 
-    assert log =~ ~s([PID #{inspect(client_aapl)}] Received update: "AAPL")
-    assert log =~ ~s([PID #{inspect(client_aapl_amzn_1)}] Received update: "AAPL")
-    assert log =~ ~s([PID #{inspect(client_aapl_amzn_2)}] Received update: "AMZN")
+    assert log =~ ~s([PID #{inspect(client_aapl)}] Received update from "AAPL")
+    assert log =~ ~s([PID #{inspect(client_aapl_amzn_1)}] Received update from "AAPL")
+    assert log =~ ~s([PID #{inspect(client_aapl_amzn_2)}] Received update from "AMZN")
 
-    assert log =~ ~s([PID #{inspect(client_aapl_amzn_tsla_1)}] Received update: "AAPL")
-    assert log =~ ~s([PID #{inspect(client_aapl_amzn_tsla_2)}] Received update: "AMZN")
-    assert log =~ ~s([PID #{inspect(client_aapl_amzn_tsla_3)}] Received update: "TSLA")
+    assert log =~ ~s([PID #{inspect(client_aapl_amzn_tsla_1)}] Received update from "AAPL")
+    assert log =~ ~s([PID #{inspect(client_aapl_amzn_tsla_2)}] Received update from "AMZN")
+    assert log =~ ~s([PID #{inspect(client_aapl_amzn_tsla_3)}] Received update from "TSLA")
 
-    refute log =~ ~s([PID #{inspect(client_aapl)}] Received update: "GOOG")
-    refute log =~ ~s([PID #{inspect(client_aapl_amzn_1)}] Received update: "TSLA")
-    refute log =~ ~s([PID #{inspect(client_aapl_amzn_2)}] Received update: "TSLA")
+    refute log =~ ~s([PID #{inspect(client_aapl)}] Received update from "GOOG")
+    refute log =~ ~s([PID #{inspect(client_aapl_amzn_1)}] Received update from "TSLA")
+    refute log =~ ~s([PID #{inspect(client_aapl_amzn_2)}] Received update from "TSLA")
   end
 
   test "clients processes stays alive while price streamer is down, and price streamer can recover itself",

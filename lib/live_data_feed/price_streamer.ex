@@ -34,7 +34,7 @@ defmodule LiveDataFeed.PriceStreamer do
       end
 
     prices
-    |> Enum.map(&%{symbol: &1.symbol, value: &1.current_price})
+    |> Enum.map(&%{symbol: &1.symbol, price: &1.current_price})
     |> StockService.set_stocks_data()
 
     Enum.each(prices, fn %{symbol: symbol, current_price: price, timestamp: ts, volume: vol} ->
@@ -47,7 +47,7 @@ defmodule LiveDataFeed.PriceStreamer do
 
       price_change_percent =
         if last_price != 0 do
-          (price - last_price) / last_price * 100
+          round((price - last_price) / last_price * 100)
         else
           0
         end

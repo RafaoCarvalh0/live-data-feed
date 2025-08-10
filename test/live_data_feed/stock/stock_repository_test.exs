@@ -1,12 +1,8 @@
 defmodule LiveDataFeed.Stock.StockRepositoryTest do
-  use ExUnit.Case, async: true
+  use LiveDataFeed.DataCase
 
-  alias LiveDataFeed.Stock.StockRespository
   alias LiveDataFeed.Fixtures.StockFixtures
-
-  setup do
-    StockFixtures.clear_stock_prices_table()
-  end
+  alias LiveDataFeed.Stock.StockRespository
 
   describe "upsert_stocks/2" do
     test "returns ok when insert is successful" do

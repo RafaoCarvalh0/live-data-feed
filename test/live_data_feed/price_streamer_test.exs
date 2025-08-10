@@ -1,5 +1,5 @@
 defmodule LiveDataFeed.PriceStreamerTest do
-  use ExUnit.Case, async: false
+  use LiveDataFeed.DataCase
 
   import ExUnit.CaptureLog
 
@@ -131,12 +131,12 @@ defmodule LiveDataFeed.PriceStreamerTest do
     test "calls StockService.set_stocks_data/1 with current prices" do
       Mimic.expect(StockService, :set_stocks_data, fn stocks ->
         assert Enum.any?(stocks, fn
-                 %{symbol: "AAPL", value: 150.0} -> true
+                 %{symbol: "AAPL", price: 150} -> true
                  _ -> false
                end)
 
         assert Enum.any?(stocks, fn
-                 %{symbol: "TSLA", value: 700.0} -> true
+                 %{symbol: "TSLA", price: 700} -> true
                  _ -> false
                end)
 
@@ -185,8 +185,8 @@ end
 defmodule MockFetcher do
   def fetch_prices do
     [
-      %{symbol: "AAPL", current_price: 150.0, timestamp: 1_000, volume: 1_000},
-      %{symbol: "TSLA", current_price: 700.0, timestamp: 1_000, volume: 2_000}
+      %{symbol: "AAPL", current_price: 150, timestamp: 1_000, volume: 1_000},
+      %{symbol: "TSLA", current_price: 700, timestamp: 1_000, volume: 2_000}
     ]
   end
 end

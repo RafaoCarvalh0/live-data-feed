@@ -1,5 +1,5 @@
 defmodule LiveDataFeed.Simulators.ClientSimulatorTest do
-  use ExUnit.Case, async: true
+  use LiveDataFeed.DataCase
 
   import ExUnit.CaptureLog
 
@@ -60,7 +60,8 @@ defmodule LiveDataFeed.Simulators.ClientSimulatorTest do
           wait_for_process_to_finish()
         end)
 
-      assert log =~ ~s([PID #{inspect(pid)}] Received update: "TSLA" - 15000 cents)
+      assert log =~
+               ~s([PID #{inspect(pid)}] Received update from "TSLA": - %{symbol: "TSLA", price: 15000} cents)
     end
 
     test "ignores other messages" do

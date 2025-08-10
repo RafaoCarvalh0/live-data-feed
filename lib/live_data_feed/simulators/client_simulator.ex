@@ -23,9 +23,9 @@ defmodule LiveDataFeed.Simulators.ClientSimulator do
     {:ok, symbol}
   end
 
-  def handle_info(%{symbol: symbol, price: price_in_cents} = _msg, state) do
+  def handle_info(%{symbol: symbol} = msg, state) do
     Logger.info(
-      "[PID #{inspect(self())}] Received update: #{inspect(symbol)} - #{inspect(price_in_cents)} cents"
+      "[PID #{inspect(self())}] Received update from #{inspect(symbol)}: - #{inspect(msg)} cents"
     )
 
     {:noreply, state}

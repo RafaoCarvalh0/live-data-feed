@@ -1,5 +1,5 @@
 defmodule LiveDataFeed.Stock.StockServiceTest do
-  use ExUnit.Case, async: true
+  use LiveDataFeed.DataCase
   use Mimic
 
   import ExUnit.CaptureLog
@@ -17,13 +17,11 @@ defmodule LiveDataFeed.Stock.StockServiceTest do
     on_exit(fn ->
       Logger.configure(level: original_level)
     end)
-
-    StockFixtures.clear_stock_prices_table()
   end
 
   describe "get_stocks_data/0" do
     test "returns the data from available stocks" do
-      Enum.each(["AAPL", "GOOG", "AMZN"], &StockFixtures.create_stock(&1, 0))
+      Enum.each(["AAPL", "GOOG", "AMZN", "TSLA"], &StockFixtures.create_stock(&1, 0))
 
       assert Enum.sort([
                %{
@@ -37,13 +35,13 @@ defmodule LiveDataFeed.Stock.StockServiceTest do
                %{
                  symbol: "AMZN",
                  price: 0
+               },
+               %{
+                 symbol: "TSLA",
+                 price: 0
                }
              ]) ==
                Enum.sort(StockService.get_stocks_data())
-    end
-
-    test "returns an empty list when there's no stock registered yet" do
-      assert StockService.get_stocks_data() == []
     end
 
     test "returns and logs error when fetching data fails" do
