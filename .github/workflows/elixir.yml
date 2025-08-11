@@ -14,6 +14,7 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
     env:
+      MIX_ENV: test
       ImageOS: ubuntu22
 
     steps:
