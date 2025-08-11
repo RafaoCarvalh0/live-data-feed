@@ -34,6 +34,8 @@ defmodule LiveDataFeed.PriceStreamer do
   end
 
   def init(state) do
+    Logger.info("Starting Price Streamer with pid #{inspect(self())}")
+
     schedule_update()
     {:ok, state}
   end
