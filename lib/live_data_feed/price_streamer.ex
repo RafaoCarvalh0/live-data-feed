@@ -1,4 +1,24 @@
 defmodule LiveDataFeed.PriceStreamer do
+  @moduledoc """
+  Periodically fetches stock prices, updates stored stock data, and broadcasts updates.
+
+  This GenServer acts as the core component responsible for:
+  - Periodic polling of stock prices from a configurable price fetcher.
+  - Comparing the latest prices with previously stored data.
+  - Persisting updated stock data through `StockService`.
+  - Broadcasting detailed price updates (including price changes and percentage changes)
+    to subscribed clients via Phoenix PubSub topics.
+
+  The module ensures continuous updates at fixed intervals (`@interval_in_ms`),
+  and handles graceful shutdown by attempting to persist the last known stock data.
+
+  ## Responsibilities
+  - Schedule periodic fetches and broadcasts of stock prices.
+  - Maintain price change calculations and include them in broadcasted messages.
+  - Use the configured stock price fetcher, defaulting to `LiveDataFeed.LocalPriceFetcher`.
+  - Delegate stock data storage and validation to `StockService`.
+  """
+
   use GenServer
 
   alias LiveDataFeed.Stock.StockService

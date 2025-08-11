@@ -1,4 +1,11 @@
 defmodule LiveDataFeed.Simulators.ClientRegistry do
+  @moduledoc """
+  Manages a simple local cache of client processes using an Agent.
+
+  Provides functions to add, retrieve, list, and remove clients by name.
+  Acts as a lightweight, in-memory registry for client PIDs.
+  """
+
   use Agent
 
   def start_link(_opts) do

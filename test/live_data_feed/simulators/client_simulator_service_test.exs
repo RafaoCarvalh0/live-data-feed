@@ -3,6 +3,7 @@ defmodule LiveDataFeed.Simulators.ClientSimulatorServiceTest do
   use Mimic
 
   alias LiveDataFeed.Simulators.ClientSimulatorService
+  alias LiveDataFeed.Simulators.ClientRegistry
 
   setup :verify_on_exit!
 
@@ -67,27 +68,16 @@ defmodule LiveDataFeed.Simulators.ClientSimulatorServiceTest do
   end
 
   describe "start_client/1" do
-    test "starts new client and adds to registry" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientSimulator, :start_link, fn name: :client1 ->
-        {:ok, self()}
-      end)
-
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :add_client, fn :client1, pid ->
-        assert pid == self()
-        :ok
-      end)
-
-      assert {:ok, pid} = ClientSimulatorService.start_client(:client1)
-      assert pid == self()
+    setup do
+      Agent.update(ClientRegistry, fn _ -> %{} end)
+      :ok
     end
 
-    test "returns existing pid if already started" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientSimulator, :start_link, fn name: :client1 ->
-        {:error, {:already_started, self()}}
-      end)
-
-      assert {:ok, pid} = ClientSimulatorService.start_client(:client1)
-      assert pid == self()
+    test "starts new client and adds to registry" do
+      {:ok, pid} = ClientSimulatorService.start_client(:client_test)
+      assert is_pid(pid)
+      assert ClientRegistry.get_client(:client_test) == pid
+      assert :ok = ClientSimulatorService.remove_client(:client_test)
     end
 
     test "returns error for invalid name" do

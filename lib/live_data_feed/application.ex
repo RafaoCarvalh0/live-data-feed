@@ -7,6 +7,7 @@ defmodule LiveDataFeed.Application do
   alias LiveDataFeed.MnesiaDbSetup
 
   @impl true
+  @spec start(any(), any()) :: {:error, any()} | {:ok, pid()}
   def start(_type, _args) do
     MnesiaDbSetup.start_mnesia()
 
@@ -15,10 +16,9 @@ defmodule LiveDataFeed.Application do
         LiveDataFeedWeb.Telemetry,
         {DNSCluster, query: Application.get_env(:live_data_feed, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: LiveDataFeed.PubSub},
-        # Start a worker by calling: LiveDataFeed.Worker.start_link(arg)
-        # {LiveDataFeed.Worker, arg},
-        # Start to serve requests, typically the last entry
-        LiveDataFeedWeb.Endpoint
+        LiveDataFeedWeb.Endpoint,
+        {DynamicSupervisor,
+         strategy: :one_for_one, name: LiveDataFeed.Simulators.ClientSupervisor}
       ]
       |> maybe_add_price_streamer()
       |> maybe_start_client_cache()

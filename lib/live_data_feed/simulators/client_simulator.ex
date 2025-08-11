@@ -1,5 +1,16 @@
 defmodule LiveDataFeed.Simulators.ClientSimulator do
+  @moduledoc """
+  A GenServer that simulates a client subscribing to stock price updates.
+
+  Maintains a set of subscribed stock symbols and manages PubSub subscriptions
+  for those symbols. Handles incoming stock update messages by logging them.
+
+  Provides functions to subscribe and unsubscribe from stock symbols, validating
+  symbols against the configured price fetcher.
+  """
+
   use GenServer
+
   require Logger
 
   def start_link(opts \\ []) do
@@ -26,14 +37,18 @@ defmodule LiveDataFeed.Simulators.ClientSimulator do
   end
 
   def handle_call({:subscribe, symbol}, _from, %{subscriptions: subs, name: name} = state) do
-    topic = "stocks:#{symbol}"
-    :ok = Phoenix.PubSub.subscribe(LiveDataFeed.PubSub, topic)
+    if MapSet.member?(subs, symbol) do
+      {:reply, :ok, state}
+    else
+      topic = "stocks:#{symbol}"
+      :ok = Phoenix.PubSub.subscribe(LiveDataFeed.PubSub, topic)
 
-    Logger.info(
-      "[PID #{inspect(self())} | Client #{inspect(name)}] Subscribed to #{inspect(topic)}"
-    )
+      Logger.info(
+        "[PID #{inspect(self())} | Client #{inspect(name)}] Subscribed to #{inspect(topic)}"
+      )
 
-    {:reply, :ok, %{state | subscriptions: MapSet.put(subs, symbol)}}
+      {:reply, :ok, %{state | subscriptions: MapSet.put(subs, symbol)}}
+    end
   end
 
   def handle_call({:unsubscribe, symbol}, _from, %{subscriptions: subs, name: name} = state) do

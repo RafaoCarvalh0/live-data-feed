@@ -1,4 +1,12 @@
 defmodule LiveDataFeed.Simulators.StockPriceSimulator do
+  @moduledoc """
+  Simulates fluctuating stock prices and trading volumes for a fixed set of symbols.
+
+  Provides a list of stock price data with random variations applied to
+  initial prices to mimic real-time market changes. Each price entry includes
+  the symbol, current price in cents, timestamp, and simulated volume.
+  """
+
   @symbols ["AAPL", "GOOG", "TSLA", "AMZN"]
 
   @initial_prices_in_cents %{

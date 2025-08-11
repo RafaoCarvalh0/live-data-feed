@@ -1,4 +1,14 @@
 defmodule LiveDataFeed.Stock.StockService do
+  @moduledoc """
+  Provides stock data management functionalities including fetching and updating stocks.
+
+  Retrieves stock symbols from a configured price fetcher and fetches
+  corresponding stock data from the repository. Allows inserting new stocks
+  or updating existing ones with input validation.
+
+  Logs errors on failure to fetch or register stocks.
+  """
+
   alias LiveDataFeed.Stock.Types
   alias LiveDataFeed.Stock.StockRespository
 

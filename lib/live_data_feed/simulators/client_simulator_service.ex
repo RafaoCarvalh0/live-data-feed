@@ -1,4 +1,11 @@
 defmodule LiveDataFeed.Simulators.ClientSimulatorService do
+  @moduledoc """
+  Manages client simulators lifecycle and subscriptions.
+
+  Provides functions to start clients, subscribe/unsubscribe to stock symbols,
+  list active clients, and remove clients.
+  """
+
   alias LiveDataFeed.Simulators.ClientSimulator
   alias LiveDataFeed.Simulators.ClientRegistry
 
@@ -26,8 +33,11 @@ defmodule LiveDataFeed.Simulators.ClientSimulatorService do
     end
   end
 
+  @spec start_client(atom()) :: {:ok, pid()} | {:error, term()}
   def start_client(name) when is_atom(name) do
-    case ClientSimulator.start_link(name: name) do
+    spec = {LiveDataFeed.Simulators.ClientSimulator, name: name}
+
+    case DynamicSupervisor.start_child(LiveDataFeed.Simulators.ClientSupervisor, spec) do
       {:ok, pid} ->
         ClientRegistry.add_client(name, pid)
         {:ok, pid}
