@@ -31,7 +31,7 @@ defmodule LiveDataFeed.DataCase do
     {:atomic, :ok} =
       :mnesia.create_table(:stock_prices, [
         {:attributes, [:symbol, :price_in_cents]},
-        {:disc_copies, [node()]},
+        {:ram_copies, [node()]},
         {:type, :set}
       ])
 

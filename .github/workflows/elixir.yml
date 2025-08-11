@@ -40,5 +40,5 @@ jobs:
         mix dialyzer --plt
         mix dialyzer
 
-    - name: Run tests
-      run: mix test
+    - name: Run tests and coverage
+      run: mix coveralls

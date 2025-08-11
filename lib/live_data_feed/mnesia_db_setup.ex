@@ -16,11 +16,9 @@ defmodule LiveDataFeed.MnesiaDbSetup do
 
       :mnesia.start()
 
-      storage_type = if env == :test, do: :ram_copies, else: :disc_copies
-
       case :mnesia.create_table(:stock_prices, [
              {:attributes, [:symbol, :price_in_cents]},
-             {storage_type, [node()]},
+             {:disc_copies, [node()]},
              {:type, :set}
            ]) do
         {:atomic, :ok} -> Logger.info("Table :stock_prices created")
