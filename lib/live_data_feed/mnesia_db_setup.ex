@@ -2,7 +2,7 @@ defmodule LiveDataFeed.MnesiaDbSetup do
   require Logger
 
   def start_mnesia() do
-    env = Mix.env()
+    env = Application.get_env(:live_data_feed, :env)
 
     if env != :test do
       Logger.info("Starting Mnesia setup")
