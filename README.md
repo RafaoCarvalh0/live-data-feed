@@ -2,6 +2,8 @@
 
 This project is a technical test developed for the company Arionkoder. It simulates a stock price streaming service that periodically fetches stock data, stores it, and broadcasts updates to subscribed clients.
 
+![Build & Tests](https://github.com/RafaoCarvalh0/live-data-feed/actions/workflows/elixir.yml/badge.svg)
+
 ## Features
 
 - Periodic fetching of stock prices via a configurable price fetcher.
