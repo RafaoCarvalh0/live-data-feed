@@ -1,6 +1,8 @@
 defmodule LiveDataFeed.MnesiaDbSetup do
   def start_mnesia() do
-    if Mix.env() != :test do
+    env = Application.get_env(:live_data_feed, :env)
+
+    if env != :test do
       :mnesia.stop()
 
       case :mnesia.create_schema([node()]) do

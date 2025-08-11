@@ -50,7 +50,8 @@ defmodule LiveDataFeed.MixProject do
       {:bandit, "~> 1.5"},
       {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
       {:uuid, "~> 1.1"},
-      {:mimic, "~> 1.7", only: :test}
+      {:mimic, "~> 1.7", only: :test},
+      {:dialyxir, "~> 1.2", only: [:dev], runtime: false}
     ]
   end
 

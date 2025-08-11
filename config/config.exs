@@ -56,3 +56,11 @@ config :phoenix, :json_library, Jason
 import_config "#{config_env()}.exs"
 
 config :mnesia, dir: ~c"mnesia/#{Mix.env()}/#{node()}"
+
+config :live_data_feed, ClientSimulatorService,
+  stock_price_fetcher: LiveDataFeed.LocalPriceFetcher
+
+config :live_data_feed, LiveDataFeed.Simulators.ClientSimulator,
+  stock_price_fetcher: LiveDataFeed.LocalPriceFetcher
+
+config :live_data_feed, env: Mix.env()

@@ -13,4 +13,6 @@ config :logger, level: :warning
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 
-config :live_data_feed, start_price_streamer?: false
+config :live_data_feed,
+  start_price_streamer?: false,
+  start_client_simulator?: false

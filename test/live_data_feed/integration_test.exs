@@ -22,36 +22,67 @@ defmodule LiveDataFeed.IntegrationTest do
   end
 
   test "clients receive only their subscribed stock updates", %{price_streamer_pid: ps_pid} do
-    {:ok, client_aapl} = ClientSimulator.start_link("AAPL")
-    {:ok, client_aapl_amzn_1} = ClientSimulator.start_link("AAPL")
-    {:ok, client_aapl_amzn_2} = ClientSimulator.start_link("AMZN")
-    {:ok, client_aapl_amzn_tsla_1} = ClientSimulator.start_link("AAPL")
-    {:ok, client_aapl_amzn_tsla_2} = ClientSimulator.start_link("AMZN")
-    {:ok, client_aapl_amzn_tsla_3} = ClientSimulator.start_link("TSLA")
+    {:ok, client_aapl} = ClientSimulator.start_link(name: :client_aapl)
+    assert :ok = ClientSimulator.subscribe_to_symbol(client_aapl, "AAPL")
+
+    {:ok, client_aapl_amzn_1} = ClientSimulator.start_link(name: :client_aapl_amzn_1)
+    assert :ok = ClientSimulator.subscribe_to_symbol(client_aapl_amzn_1, "AAPL")
+
+    {:ok, client_aapl_amzn_2} = ClientSimulator.start_link(name: :client_aapl_amzn_2)
+    assert :ok = ClientSimulator.subscribe_to_symbol(client_aapl_amzn_2, "AMZN")
+
+    {:ok, client_aapl_amzn_tsla_1} = ClientSimulator.start_link(name: :client_aapl_amzn_tsla_1)
+    assert :ok = ClientSimulator.subscribe_to_symbol(client_aapl_amzn_tsla_1, "AAPL")
+
+    {:ok, client_aapl_amzn_tsla_2} = ClientSimulator.start_link(name: :client_aapl_amzn_tsla_2)
+    assert :ok = ClientSimulator.subscribe_to_symbol(client_aapl_amzn_tsla_2, "AMZN")
+
+    {:ok, client_aapl_amzn_tsla_3} = ClientSimulator.start_link(name: :client_aapl_amzn_tsla_3)
+    assert :ok = ClientSimulator.subscribe_to_symbol(client_aapl_amzn_tsla_3, "TSLA")
 
     log =
       capture_log(fn ->
         force_stock_update(ps_pid)
       end)
 
-    assert log =~ ~s([PID #{inspect(client_aapl)}] Received update from "AAPL")
-    assert log =~ ~s([PID #{inspect(client_aapl_amzn_1)}] Received update from "AAPL")
-    assert log =~ ~s([PID #{inspect(client_aapl_amzn_2)}] Received update from "AMZN")
+    assert log =~
+             ~s([PID #{inspect(client_aapl)} | Client :client_aapl] Received update from "AAPL")
 
-    assert log =~ ~s([PID #{inspect(client_aapl_amzn_tsla_1)}] Received update from "AAPL")
-    assert log =~ ~s([PID #{inspect(client_aapl_amzn_tsla_2)}] Received update from "AMZN")
-    assert log =~ ~s([PID #{inspect(client_aapl_amzn_tsla_3)}] Received update from "TSLA")
+    assert log =~
+             ~s([PID #{inspect(client_aapl_amzn_1)} | Client :client_aapl_amzn_1] Received update from "AAPL")
 
-    refute log =~ ~s([PID #{inspect(client_aapl)}] Received update from "GOOG")
-    refute log =~ ~s([PID #{inspect(client_aapl_amzn_1)}] Received update from "TSLA")
-    refute log =~ ~s([PID #{inspect(client_aapl_amzn_2)}] Received update from "TSLA")
+    assert log =~
+             ~s([PID #{inspect(client_aapl_amzn_2)} | Client :client_aapl_amzn_2] Received update from "AMZN")
+
+    assert log =~
+             ~s([PID #{inspect(client_aapl_amzn_tsla_1)} | Client :client_aapl_amzn_tsla_1] Received update from "AAPL")
+
+    assert log =~
+             ~s([PID #{inspect(client_aapl_amzn_tsla_2)} | Client :client_aapl_amzn_tsla_2] Received update from "AMZN")
+
+    assert log =~
+             ~s([PID #{inspect(client_aapl_amzn_tsla_3)} | Client :client_aapl_amzn_tsla_3] Received update from "TSLA")
+
+    refute log =~
+             ~s([PID #{inspect(client_aapl)} | Client :client_aapl] Received update from "GOOG")
+
+    refute log =~
+             ~s([PID #{inspect(client_aapl_amzn_1)} | Client :client_aapl_amzn_1] Received update from "TSLA")
+
+    refute log =~
+             ~s([PID #{inspect(client_aapl_amzn_2)} | Client :client_aapl_amzn_2] Received update from "TSLA")
   end
 
   test "clients processes stays alive while price streamer is down, and price streamer can recover itself",
        %{price_streamer_pid: price_streamer_pid} do
-    {:ok, client} = ClientSimulator.start_link("AAPL")
-    {:ok, client2} = ClientSimulator.start_link("GOOG")
-    {:ok, client3} = ClientSimulator.start_link("TSLA")
+    {:ok, client} = ClientSimulator.start_link(name: :client_aapl)
+    :ok = ClientSimulator.subscribe_to_symbol(client, "AAPL")
+
+    {:ok, client2} = ClientSimulator.start_link(name: :client_goog)
+    :ok = ClientSimulator.subscribe_to_symbol(client2, "GOOG")
+
+    {:ok, client3} = ClientSimulator.start_link(name: :client_tsla)
+    :ok = ClientSimulator.subscribe_to_symbol(client3, "TSLA")
 
     price_streamer_monitor = Process.monitor(price_streamer_pid)
 

@@ -21,6 +21,7 @@ defmodule LiveDataFeed.Application do
         LiveDataFeedWeb.Endpoint
       ]
       |> maybe_add_price_streamer()
+      |> maybe_start_client_cache()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -31,6 +32,14 @@ defmodule LiveDataFeed.Application do
   defp maybe_add_price_streamer(children) do
     if Application.get_env(:live_data_feed, :start_price_streamer?, true) do
       children ++ [{LiveDataFeed.PriceStreamer, name: :price_streamer}]
+    else
+      children
+    end
+  end
+
+  defp maybe_start_client_cache(children) do
+    if Application.get_env(:live_data_feed, :start_client_cache?, true) do
+      children ++ [{LiveDataFeed.Simulators.ClientRegistry, []}]
     else
       children
     end

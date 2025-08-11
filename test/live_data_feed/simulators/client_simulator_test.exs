@@ -1,145 +1,90 @@
-defmodule LiveDataFeed.Simulators.ClientSimulatorServiceTest do
+defmodule LiveDataFeed.Simulators.ClientSimulatorTest do
   use ExUnit.Case, async: true
   use Mimic
 
-  alias LiveDataFeed.Simulators.ClientSimulatorService
+  alias LiveDataFeed.Simulators.ClientSimulator
 
   setup :verify_on_exit!
 
+  setup do
+    Application.put_env(:live_data_feed, ClientSimulator,
+      stock_price_fetcher: LiveDataFeed.LocalPriceFetcher
+    )
+
+    Mimic.stub(Phoenix.PubSub, :subscribe, fn _pubsub, _topic -> :ok end)
+    Mimic.stub(Phoenix.PubSub, :unsubscribe, fn _pubsub, _topic -> :ok end)
+
+    :ok
+  end
+
+  describe "start_link/1" do
+    test "starts the GenServer with given name" do
+      {:ok, pid} = ClientSimulator.start_link(name: :test_client)
+      assert is_pid(pid)
+
+      state = :sys.get_state(pid)
+      assert state.name == :test_client
+      assert MapSet.new() == state.subscriptions
+    end
+  end
+
   describe "subscribe_to_symbol/2" do
-    test "subscribes when client running and symbol valid" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 -> self() end)
-      Mimic.expect(LiveDataFeed.LocalPriceFetcher, :available_symbols, fn -> ["AAPL", "GOOG"] end)
-
-      Mimic.expect(LiveDataFeed.Simulators.ClientSimulator, :subscribe_to_symbol, fn pid,
-                                                                                     "AAPL" ->
-        assert pid == self()
-        :ok
-      end)
-
-      assert :ok == ClientSimulatorService.subscribe_to_symbol(:client1, "AAPL")
+    test "subscribes successfully when symbol is valid" do
+      {:ok, pid} = ClientSimulator.start_link(name: :client1)
+      assert :ok == ClientSimulator.subscribe_to_symbol(pid, "AAPL")
     end
 
-    test "returns error if client simulator not running" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :unknown -> nil end)
-
-      assert {:error, :client_simulator_not_running} ==
-               ClientSimulatorService.subscribe_to_symbol(:unknown, "AAPL")
-    end
-
-    test "returns error if invalid symbol" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 -> self() end)
-      Mimic.expect(LiveDataFeed.LocalPriceFetcher, :available_symbols, fn -> ["AAPL", "GOOG"] end)
-
-      assert {:error, :invalid_symbol} ==
-               ClientSimulatorService.subscribe_to_symbol(:client1, "INVALID")
+    test "returns error when symbol is invalid" do
+      {:ok, pid} = ClientSimulator.start_link(name: :client1)
+      assert {:error, :invalid_symbol} == ClientSimulator.subscribe_to_symbol(pid, "INVALID")
     end
   end
 
   describe "unsubscribe_from_symbol/2" do
-    test "unsubscribes when client running and symbol valid" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 -> self() end)
-      Mimic.expect(LiveDataFeed.LocalPriceFetcher, :available_symbols, fn -> ["AAPL", "GOOG"] end)
-
-      Mimic.expect(LiveDataFeed.Simulators.ClientSimulator, :unsubscribe_from_symbol, fn pid,
-                                                                                         "AAPL" ->
-        assert pid == self()
-        :ok
-      end)
-
-      assert :ok == ClientSimulatorService.unsubscribe_from_symbol(:client1, "AAPL")
+    test "unsubscribes successfully when symbol is valid" do
+      {:ok, pid} = ClientSimulator.start_link(name: :client1)
+      assert :ok == ClientSimulator.unsubscribe_from_symbol(pid, "GOOG")
     end
 
-    test "returns error if client simulator not running" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :unknown -> nil end)
-
-      assert {:error, :client_simulator_not_running} ==
-               ClientSimulatorService.unsubscribe_from_symbol(:unknown, "AAPL")
-    end
-
-    test "returns error if invalid symbol" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 -> self() end)
-      Mimic.expect(LiveDataFeed.LocalPriceFetcher, :available_symbols, fn -> ["AAPL", "GOOG"] end)
-
-      assert {:error, :invalid_symbol} ==
-               ClientSimulatorService.unsubscribe_from_symbol(:client1, "INVALID")
+    test "returns error when symbol is invalid" do
+      {:ok, pid} = ClientSimulator.start_link(name: :client1)
+      assert {:error, :invalid_symbol} == ClientSimulator.unsubscribe_from_symbol(pid, "INVALID")
     end
   end
 
-  describe "start_client/1" do
-    test "starts new client and adds to registry" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientSimulator, :start_link, fn name: :client1 ->
-        {:ok, self()}
-      end)
+  describe "handle_call :subscribe" do
+    test "updates state and subscribes to pubsub topic" do
+      {:ok, pid} = ClientSimulator.start_link(name: :client1)
+      assert :ok == GenServer.call(pid, {:subscribe, "AAPL"})
 
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :add_client, fn :client1, pid ->
-        assert pid == self()
-        :ok
-      end)
-
-      assert {:ok, pid} = ClientSimulatorService.start_client(:client1)
-      assert pid == self()
-    end
-
-    test "returns existing pid if already started" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientSimulator, :start_link, fn name: :client1 ->
-        {:error, {:already_started, self()}}
-      end)
-
-      assert {:ok, pid} = ClientSimulatorService.start_client(:client1)
-      assert pid == self()
-    end
-
-    test "returns error for invalid name" do
-      assert {:error, "name must be an atom"} = ClientSimulatorService.start_client("not_atom")
+      state = :sys.get_state(pid)
+      assert MapSet.member?(state.subscriptions, "AAPL")
     end
   end
 
-  describe "list_clients/0" do
-    test "delegates to ClientRegistry.list_clients" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :list_clients, fn -> %{a: self()} end)
+  describe "handle_call :unsubscribe" do
+    test "updates state and unsubscribes from pubsub topic" do
+      {:ok, pid} = ClientSimulator.start_link(name: :client1)
+      GenServer.call(pid, {:subscribe, "GOOG"})
 
-      assert %{a: pid} = ClientSimulatorService.list_clients()
-      assert is_pid(pid)
+      assert :ok == GenServer.call(pid, {:unsubscribe, "GOOG"})
+
+      state = :sys.get_state(pid)
+      refute MapSet.member?(state.subscriptions, "GOOG")
     end
   end
 
-  describe "remove_client/1" do
-    setup do
-      dummy_pid = spawn(fn -> Process.sleep(:infinity) end)
+  describe "handle_info/2" do
+    test "handles stock update message and other messages keeping state" do
+      {:ok, pid} = ClientSimulator.start_link(name: :client1)
 
-      %{dummy_pid: dummy_pid}
-    end
+      msg = %{symbol: "AAPL", price: 100}
 
-    test "removes existing client" do
-      dummy_pid =
-        spawn(fn ->
-          Process.flag(:trap_exit, true)
+      {:noreply, state} = ClientSimulator.handle_info(msg, :sys.get_state(pid))
+      assert state
 
-          receive do
-            :stop -> :ok
-            {:EXIT, _from, _reason} -> :ok
-          after
-            5_000 -> :ok
-          end
-        end)
-
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 ->
-        dummy_pid
-      end)
-
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :remove_client, fn :client1 -> :ok end)
-
-      monitor_ref = Process.monitor(dummy_pid)
-
-      assert :ok = ClientSimulatorService.remove_client(:client1)
-
-      assert_receive {:DOWN, ^monitor_ref, :process, ^dummy_pid, _reason}, 1_000
-    end
-
-    test "returns error if client not found" do
-      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 -> nil end)
-      assert {:error, :client_not_found} == ClientSimulatorService.remove_client(:client1)
+      {:noreply, state2} = ClientSimulator.handle_info(:random_message, state)
+      assert state == state2
     end
   end
 end
