@@ -11,7 +11,7 @@ defmodule LiveDataFeed.MixProject do
       aliases: aliases(),
       test_coverage: [tool: ExCoveralls],
       dialyzer: [
-        ignore_warnings: ".dialyzer_ignore.exs",
+        ignore_warnings: "dialyzer_ignore.exs",
         plt_file: {:no_warn, "priv/plts/project.plt"}
       ],
       deps: deps()

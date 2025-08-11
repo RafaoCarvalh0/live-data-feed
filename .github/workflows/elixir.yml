@@ -1,4 +1,5 @@
 name: Live Data Feed CI
+
 on:
   push:
     branches: [ "master" ]
@@ -10,7 +11,6 @@ permissions:
 
 jobs:
   build:
-
     name: Build and test
     runs-on: ubuntu-latest
     env:
@@ -33,13 +33,27 @@ jobs:
         key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
         restore-keys: ${{ runner.os }}-mix-
 
-    - name: Install dependencies
-      run: mix deps.get
+    - name: Save Elixir and Erlang version for PLT caching
+      run: echo "$ELIXIR_VERSION $ERLANG_VERSION" > .elixir_otp_version
 
-    - name: Run Dialyzer
-      run: |
-        mix dialyzer --plt
-        mix dialyzer
+    - name: Restore PLT cache
+      uses: actions/cache@v3
+      with:
+        path: priv/plts
+        key: plt-${{ runner.arch }}-${{ hashFiles('.elixir_otp_version', 'mix.lock') }}
+        restore-keys: plt-${{ runner.arch }}-
+
+    - name: Create PLTs
+      run: mix dialyzer --plt
+
+    - name: Save PLT cache
+      uses: actions/cache@v3
+      with:
+        path: priv/plts
+        key: plt-${{ runner.arch }}-${{ hashFiles('.elixir_otp_version', 'mix.lock') }}
+
+    - name: Run dialyzer
+      run: mix dialyzer
 
     - name: Run tests and coverage
       run: mix coveralls
