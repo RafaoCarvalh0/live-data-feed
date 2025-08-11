@@ -2,6 +2,8 @@ defmodule LiveDataFeed.Simulators.ClientSimulatorTest do
   use ExUnit.Case, async: true
   use Mimic
 
+  import ExUnit.CaptureLog
+
   alias LiveDataFeed.Simulators.ClientSimulator
 
   setup :verify_on_exit!
@@ -13,6 +15,13 @@ defmodule LiveDataFeed.Simulators.ClientSimulatorTest do
 
     Mimic.stub(Phoenix.PubSub, :subscribe, fn _pubsub, _topic -> :ok end)
     Mimic.stub(Phoenix.PubSub, :unsubscribe, fn _pubsub, _topic -> :ok end)
+
+    original_level = Logger.level()
+    Logger.configure(level: :info)
+
+    on_exit(fn ->
+      Logger.configure(level: original_level)
+    end)
 
     :ok
   end
@@ -85,6 +94,21 @@ defmodule LiveDataFeed.Simulators.ClientSimulatorTest do
 
       {:noreply, state2} = ClientSimulator.handle_info(:random_message, state)
       assert state == state2
+    end
+  end
+
+  describe "terminate/2" do
+    test "calls ClientRegistry.remove_client/1 and logs a warning" do
+      {:ok, pid} = ClientSimulator.start_link(name: :client_foo)
+
+      logs =
+        capture_log(fn ->
+          GenServer.stop(pid)
+        end)
+
+      assert logs =~ ~s(Gracefully shutting down: clearing :client_foo data from cache. reason:)
+
+      refute Process.alive?(pid)
     end
   end
 end

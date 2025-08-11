@@ -11,6 +11,8 @@ defmodule LiveDataFeed.Simulators.ClientSimulator do
 
   use GenServer
 
+  alias LiveDataFeed.Simulators.ClientRegistry
+
   require Logger
 
   def start_link(opts \\ []) do
@@ -18,7 +20,11 @@ defmodule LiveDataFeed.Simulators.ClientSimulator do
     GenServer.start_link(__MODULE__, %{subscriptions: MapSet.new(), name: name}, opts)
   end
 
-  def init(state), do: {:ok, state}
+  def init(state) do
+    Logger.info("Starting a new client: #{state.name} - pid #{inspect(self())}")
+
+    {:ok, state}
+  end
 
   def subscribe_to_symbol(pid, symbol) do
     if symbol in available_symbols() do
@@ -75,6 +81,14 @@ defmodule LiveDataFeed.Simulators.ClientSimulator do
   end
 
   def handle_info(_msg, state), do: {:noreply, state}
+
+  def terminate(reason, %{name: name} = _state) do
+    Logger.warning(
+      "Gracefully shutting down: clearing #{inspect(name)} data from cache. reason: #{inspect(reason, pretty: true)}"
+    )
+
+    ClientRegistry.remove_client(name)
+  end
 
   defp available_symbols do
     price_fetcher =
