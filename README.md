@@ -4,6 +4,10 @@ This project is a technical test developed for the company Arionkoder. It simula
 
 ![Build & Tests](https://github.com/RafaoCarvalh0/live-data-feed/actions/workflows/elixir.yml/badge.svg)
 
+## Prerequisites
+- Elixir: version >= 1.14
+- Erlang/OTP: a version compatible with Elixir (e.g., OTP 25 or 26)
+
 ## Features
 
 - Periodic fetching of stock prices via a configurable price fetcher.
