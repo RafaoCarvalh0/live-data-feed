@@ -1,80 +1,145 @@
-defmodule LiveDataFeed.Simulators.ClientSimulatorTest do
-  use LiveDataFeed.DataCase
+defmodule LiveDataFeed.Simulators.ClientSimulatorServiceTest do
+  use ExUnit.Case, async: true
+  use Mimic
 
-  import ExUnit.CaptureLog
+  alias LiveDataFeed.Simulators.ClientSimulatorService
 
-  alias LiveDataFeed.Simulators.ClientSimulator
+  setup :verify_on_exit!
 
-  @available_symbols ["AAPL", "GOOG", "TSLA", "AMZN"]
+  describe "subscribe_to_symbol/2" do
+    test "subscribes when client running and symbol valid" do
+      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 -> self() end)
+      Mimic.expect(LiveDataFeed.LocalPriceFetcher, :available_symbols, fn -> ["AAPL", "GOOG"] end)
 
-  setup do
-    original_level = Logger.level()
-    Logger.configure(level: :info)
-
-    on_exit(fn ->
-      Logger.configure(level: original_level)
-    end)
-  end
-
-  describe "start_link/1" do
-    test "starts client process with valid symbol" do
-      Enum.each(@available_symbols, fn symbol ->
-        {:ok, pid} = ClientSimulator.start_link(symbol)
-        assert Process.alive?(pid)
+      Mimic.expect(LiveDataFeed.Simulators.ClientSimulator, :subscribe_to_symbol, fn pid,
+                                                                                     "AAPL" ->
+        assert pid == self()
+        :ok
       end)
+
+      assert :ok == ClientSimulatorService.subscribe_to_symbol(:client1, "AAPL")
     end
 
-    test "allow many clients to a same symbol" do
-      {:ok, pid} = ClientSimulator.start_link("TSLA")
-      assert Process.alive?(pid)
+    test "returns error if client simulator not running" do
+      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :unknown -> nil end)
 
-      {:ok, another_pid} = ClientSimulator.start_link("TSLA")
-      assert Process.alive?(another_pid)
-
-      assert pid != another_pid
+      assert {:error, :client_simulator_not_running} ==
+               ClientSimulatorService.subscribe_to_symbol(:unknown, "AAPL")
     end
 
-    test "returns error for invalid symbol" do
-      assert {:error, :invalid_symbol} = ClientSimulator.start_link("INVALID")
+    test "returns error if invalid symbol" do
+      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 -> self() end)
+      Mimic.expect(LiveDataFeed.LocalPriceFetcher, :available_symbols, fn -> ["AAPL", "GOOG"] end)
+
+      assert {:error, :invalid_symbol} ==
+               ClientSimulatorService.subscribe_to_symbol(:client1, "INVALID")
     end
   end
 
-  describe "init/1" do
-    test "subscribes client to the correct PubSub topic and logs subscription message" do
-      log =
-        capture_log(fn ->
-          {:ok, _pid} = ClientSimulator.start_link("GOOG")
+  describe "unsubscribe_from_symbol/2" do
+    test "unsubscribes when client running and symbol valid" do
+      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 -> self() end)
+      Mimic.expect(LiveDataFeed.LocalPriceFetcher, :available_symbols, fn -> ["AAPL", "GOOG"] end)
+
+      Mimic.expect(LiveDataFeed.Simulators.ClientSimulator, :unsubscribe_from_symbol, fn pid,
+                                                                                         "AAPL" ->
+        assert pid == self()
+        :ok
+      end)
+
+      assert :ok == ClientSimulatorService.unsubscribe_from_symbol(:client1, "AAPL")
+    end
+
+    test "returns error if client simulator not running" do
+      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :unknown -> nil end)
+
+      assert {:error, :client_simulator_not_running} ==
+               ClientSimulatorService.unsubscribe_from_symbol(:unknown, "AAPL")
+    end
+
+    test "returns error if invalid symbol" do
+      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 -> self() end)
+      Mimic.expect(LiveDataFeed.LocalPriceFetcher, :available_symbols, fn -> ["AAPL", "GOOG"] end)
+
+      assert {:error, :invalid_symbol} ==
+               ClientSimulatorService.unsubscribe_from_symbol(:client1, "INVALID")
+    end
+  end
+
+  describe "start_client/1" do
+    test "starts new client and adds to registry" do
+      Mimic.expect(LiveDataFeed.Simulators.ClientSimulator, :start_link, fn name: :client1 ->
+        {:ok, self()}
+      end)
+
+      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :add_client, fn :client1, pid ->
+        assert pid == self()
+        :ok
+      end)
+
+      assert {:ok, pid} = ClientSimulatorService.start_client(:client1)
+      assert pid == self()
+    end
+
+    test "returns existing pid if already started" do
+      Mimic.expect(LiveDataFeed.Simulators.ClientSimulator, :start_link, fn name: :client1 ->
+        {:error, {:already_started, self()}}
+      end)
+
+      assert {:ok, pid} = ClientSimulatorService.start_client(:client1)
+      assert pid == self()
+    end
+
+    test "returns error for invalid name" do
+      assert {:error, "name must be an atom"} = ClientSimulatorService.start_client("not_atom")
+    end
+  end
+
+  describe "list_clients/0" do
+    test "delegates to ClientRegistry.list_clients" do
+      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :list_clients, fn -> %{a: self()} end)
+
+      assert %{a: pid} = ClientSimulatorService.list_clients()
+      assert is_pid(pid)
+    end
+  end
+
+  describe "remove_client/1" do
+    setup do
+      dummy_pid = spawn(fn -> Process.sleep(:infinity) end)
+
+      %{dummy_pid: dummy_pid}
+    end
+
+    test "removes existing client" do
+      dummy_pid =
+        spawn(fn ->
+          Process.flag(:trap_exit, true)
+
+          receive do
+            :stop -> :ok
+            {:EXIT, _from, _reason} -> :ok
+          after
+            5_000 -> :ok
+          end
         end)
 
-      assert log =~ ~S(Subscribed to "stocks:GOOG")
+      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 ->
+        dummy_pid
+      end)
+
+      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :remove_client, fn :client1 -> :ok end)
+
+      monitor_ref = Process.monitor(dummy_pid)
+
+      assert :ok = ClientSimulatorService.remove_client(:client1)
+
+      assert_receive {:DOWN, ^monitor_ref, :process, ^dummy_pid, _reason}, 1_000
+    end
+
+    test "returns error if client not found" do
+      Mimic.expect(LiveDataFeed.Simulators.ClientRegistry, :get_client, fn :client1 -> nil end)
+      assert {:error, :client_not_found} == ClientSimulatorService.remove_client(:client1)
     end
   end
-
-  describe "handle_info/2" do
-    test "receives stock price update message and logs update" do
-      {:ok, pid} = ClientSimulator.start_link("TSLA")
-
-      log =
-        capture_log(fn ->
-          send(pid, %{symbol: "TSLA", price: 15000})
-          wait_for_process_to_finish()
-        end)
-
-      assert log =~
-               ~s([PID #{inspect(pid)}] Received update from "TSLA": - %{symbol: "TSLA", price: 15000} cents)
-    end
-
-    test "ignores other messages" do
-      {:ok, pid} = ClientSimulator.start_link("TSLA")
-
-      message = %{foo: "bar"}
-
-      send(pid, message)
-      wait_for_process_to_finish()
-
-      refute_received ^message
-    end
-  end
-
-  defp wait_for_process_to_finish(), do: Process.sleep(100)
 end
