@@ -32,6 +32,9 @@ jobs:
         path: deps
         key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
         restore-keys: ${{ runner.os }}-mix-
+          
+    - name: Install dependencies
+      run: mix deps.get
 
     - name: Save Elixir and Erlang version for PLT caching
       run: echo "$ELIXIR_VERSION $ERLANG_VERSION" > .elixir_otp_version
