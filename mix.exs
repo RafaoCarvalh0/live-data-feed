@@ -9,7 +9,8 @@ defmodule LiveDataFeed.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -51,7 +52,8 @@ defmodule LiveDataFeed.MixProject do
       {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
       {:uuid, "~> 1.1"},
       {:mimic, "~> 1.7", only: :test},
-      {:dialyxir, "~> 1.2", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.2", only: [:dev], runtime: false},
+      {:excoveralls, "~> 0.18.5"}
     ]
   end
 
