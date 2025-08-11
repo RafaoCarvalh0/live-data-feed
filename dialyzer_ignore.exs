@@ -1,6 +1,6 @@
 [
-  {:no_return, {LiveDataFeedWeb.ConnCase, :_, :_}},
-  {:no_return, {LiveDataFeed.DataCase, :_, :_}},
-  {:unknown_function, {LiveDataFeedWeb.ConnCase, :_, :_, :_}},
-  {:unknown_function, {LiveDataFeed.DataCase, :_, :_, :_}}
+  {:no_return, {:_, :_, :_, _}, file: ~c"test/support/conn_case.ex"},
+  {:no_return, {:_, :_, :_, _}, file: ~c"test/support/data_case.ex"},
+  {:unknown_function, {:_, :_, :_, _}, file: ~c"test/support/conn_case.ex"},
+  {:unknown_function, {:_, :_, :_, _}, file: ~c"test/support/data_case.ex"}
 ]
