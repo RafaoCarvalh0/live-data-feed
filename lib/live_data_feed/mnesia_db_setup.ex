@@ -1,8 +1,11 @@
 defmodule LiveDataFeed.MnesiaDbSetup do
+  require Logger
+
   def start_mnesia() do
     env = Application.get_env(:live_data_feed, :env)
 
     if env != :test do
+      Logger.info("Starting Mnesia setup")
       :mnesia.stop()
 
       case :mnesia.create_schema([node()]) do
@@ -24,6 +27,7 @@ defmodule LiveDataFeed.MnesiaDbSetup do
       end
 
       :mnesia.wait_for_tables([:stock_prices], 5000)
+      Logger.info("Setup concluded")
     end
   end
 end

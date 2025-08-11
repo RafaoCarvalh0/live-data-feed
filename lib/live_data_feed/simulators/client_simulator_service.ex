@@ -43,6 +43,7 @@ defmodule LiveDataFeed.Simulators.ClientSimulatorService do
         {:ok, pid}
 
       {:error, {:already_started, pid}} ->
+        ClientRegistry.add_client(name, pid)
         {:ok, pid}
 
       {:error, reason} ->
@@ -60,15 +61,23 @@ defmodule LiveDataFeed.Simulators.ClientSimulatorService do
 
   @spec remove_client(atom()) :: :ok | {:error, :client_not_found}
   def remove_client(name) when is_atom(name) do
-    case ClientRegistry.get_client(name) do
+    case Process.whereis(name) do
       nil ->
         {:error, :client_not_found}
 
       pid ->
-        Process.exit(pid, :normal)
+        Enum.each(list_available_symbols(), &unsubscribe_from_symbol(name, &1))
+
+        DynamicSupervisor.terminate_child(LiveDataFeed.Simulators.ClientSupervisor, pid)
+
         ClientRegistry.remove_client(name)
         :ok
     end
+  end
+
+  @spec list_available_symbols() :: :ok | [String.t()]
+  def list_available_symbols() do
+    price_fetcher().available_symbols()
   end
 
   @spec valid_symbol?(any()) :: boolean()

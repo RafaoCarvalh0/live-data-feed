@@ -52,14 +52,18 @@ defmodule LiveDataFeed.Simulators.ClientSimulator do
   end
 
   def handle_call({:unsubscribe, symbol}, _from, %{subscriptions: subs, name: name} = state) do
-    topic = "stocks:#{symbol}"
-    :ok = Phoenix.PubSub.unsubscribe(LiveDataFeed.PubSub, topic)
+    if MapSet.member?(subs, symbol) do
+      topic = "stocks:#{symbol}"
+      :ok = Phoenix.PubSub.unsubscribe(LiveDataFeed.PubSub, topic)
 
-    Logger.info(
-      "[PID #{inspect(self())} | Client #{inspect(name)}] Unsubscribed from #{inspect(topic)}"
-    )
+      Logger.info(
+        "[PID #{inspect(self())} | Client #{inspect(name)}] Unsubscribed from #{inspect(topic)}"
+      )
 
-    {:reply, :ok, %{state | subscriptions: MapSet.delete(subs, symbol)}}
+      {:reply, :ok, %{state | subscriptions: MapSet.delete(subs, symbol)}}
+    else
+      {:reply, :ok, state}
+    end
   end
 
   def handle_info(%{symbol: symbol} = msg, %{name: name} = state) do

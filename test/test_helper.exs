@@ -1,5 +1,6 @@
 ExUnit.start()
 
+Mimic.copy(DynamicSupervisor)
 Mimic.copy(LiveDataFeed.LocalPriceFetcher)
 Mimic.copy(LiveDataFeed.Simulators.ClientRegistry)
 Mimic.copy(LiveDataFeed.Simulators.ClientSimulator)
