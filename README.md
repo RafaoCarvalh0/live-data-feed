@@ -38,15 +38,15 @@ This project is a technical test developed for the company Arionkoder. It simula
 
 5. **Subscribe the client to a stock symbol:**
 
-   ```elixir
-   # use this function o check available symbols
+   ```js
+   // use this function to check available symbols
    ClientSimulatorService.list_available_symbols
    ["AAPL", "GOOG", "TSLA", "AMZN"]
 
    ClientSimulatorService.subscribe_to_symbol(:client1, "AAPL")
    [info] [PID #PID<0.359.0> | Client :client1] Subscribed to "stocks:AAPL"
    :ok
-   # the client will start receiving updates after a few moments
+   // the client will start receiving updates after a few moments
    [info] [PID #PID<0.359.0> | Client :client1] Received update from "AAPL": %{
      timestamp: 1754877797948,
      symbol: "AAPL",
@@ -64,7 +64,7 @@ This project is a technical test developed for the company Arionkoder. It simula
 
 6. **Unsubscribe from a stock symbol:**
 
-   ```elixir
+   ```js
    ClientSimulatorService.unsubscribe_from_symbol(:client1, "AAPL")
    [info] [PID #PID<0.359.0> | Client :client1] Unsubscribed from "stocks:AAPL"
    :ok
@@ -78,7 +78,7 @@ This project is a technical test developed for the company Arionkoder. It simula
 
 8. **List all clients:**
 
-   ```elixir
+   ```js
     ClientSimulatorService.list_clients
     %{client: #PID<0.481.0>, client2: #PID<0.483.0>}
    ```
